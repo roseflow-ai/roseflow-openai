@@ -1,0 +1,14 @@
+default: &default
+  organization_id: <YOUR OPENAI ORGANIZATION ID>
+
+development:
+  <<: *default
+  api_key: <YOUR OPENAI API KEY FOR DEVELOPMENT>
+
+test:
+  <<: *default
+  api_key: <YOUR OPENAI API KEY FOR TEST>
+
+production:
+  <<: *default
+  api_key: <YOUR OPENAI API KEY FOR PRODUCTION>
