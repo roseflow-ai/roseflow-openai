@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "roseflow/openai"
+require "anyway_config"
 require "vcr"
 require "webmock"
 
@@ -15,3 +16,5 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 end
+
+Anyway::Settings.use_local_files = true

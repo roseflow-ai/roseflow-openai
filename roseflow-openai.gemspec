@@ -4,7 +4,7 @@ require_relative "lib/roseflow/openai/version"
 
 Gem::Specification.new do |spec|
   spec.name = "roseflow-openai"
-  spec.version = Roseflow::OpenAI::VERSION
+  spec.version = Roseflow::OpenAI.gem_version
   spec.authors = ["Lauri Jutila"]
   spec.email = ["git@laurijutila.com"]
 

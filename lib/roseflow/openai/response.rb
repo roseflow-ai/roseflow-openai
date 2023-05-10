@@ -4,6 +4,11 @@ require "dry-struct"
 require "roseflow/types"
 require "roseflow/openai/embedding"
 
+module Types
+  include Dry.Types()
+  Number = Types::Integer | Types::Float
+end
+
 module Roseflow
   module OpenAI
     FailedToCreateEmbeddingError = Class.new(StandardError)
@@ -25,14 +30,14 @@ module Roseflow
         raise NotImplementedError, "Subclasses must implement this method."
       end
     end # ApiResponse
-    
+
     class TextApiResponse < ApiResponse
       def body
         @body ||= ApiResponseBody.new(JSON.parse(@response.body))
       end
 
       def choices
-        body.choices.map {|choice| Choice.new(choice) }
+        body.choices.map { |choice| Choice.new(choice) }
       end
     end # TextApiResponse
 
@@ -46,11 +51,19 @@ module Roseflow
       def response
         choices.first
       end
+
+      def responses
+        choices
+      end
     end
 
     class EditResponse < TextApiResponse
       def response
         choices.first
+      end
+
+      def responses
+        choices
       end
     end
 
@@ -60,26 +73,26 @@ module Roseflow
       end
 
       def images
-        body.data.map {|image| Image.new(image) }
+        body.data.map { |image| Image.new(image) }
       end
     end # ImageApiResponse
 
     class EmbeddingApiResponse < ApiResponse
       def body
         @body ||= begin
-          case @response.status
-          when 200
-            EmbeddingApiResponseBody.new(JSON.parse(@response.body))
-          else
-            EmbeddingApiResponseErrorBody.new(JSON.parse(@response.body))
+            case @response.status
+            when 200
+              EmbeddingApiResponseBody.new(JSON.parse(@response.body))
+            else
+              EmbeddingApiResponseErrorBody.new(JSON.parse(@response.body))
+            end
           end
-        end
       end
 
       def embedding
         case @response.status
         when 200
-          body.data.map {|embedding| Embedding.new(embedding) }.first
+          body.data.map { |embedding| Embedding.new(embedding) }.first
         else
           raise FailedToCreateEmbeddingError, body.error.message
         end
@@ -109,7 +122,7 @@ module Roseflow
         return text if text
       end
     end # Choice
-    
+
     class ApiUsage < Dry::Struct
       transform_keys(&:to_sym)
 
@@ -125,11 +138,19 @@ module Roseflow
       attribute :data, Types::Array(Types::Hash)
     end # ImageApiResponseBody
 
+    class OpenAIEmbedding < Dry::Struct
+      transform_keys(&:to_sym)
+
+      attribute :object, Types::String.default("embedding")
+      attribute :embedding, Types::Array(Types::Number)
+      attribute :index, Types::Integer
+    end # OpenAIEmbedding
+
     class EmbeddingApiResponseBody < Dry::Struct
       transform_keys(&:to_sym)
 
       attribute :object, Types::String
-      attribute :data, Types::Array(Types::Hash)
+      attribute :data, Types::Array(OpenAIEmbedding)
       attribute :model, Types::String
       attribute :usage, ApiUsage
     end # EmbeddingApiResponseBody
@@ -141,7 +162,7 @@ module Roseflow
         attribute :message, Types::String
       end
     end # EmbeddingApiResponseErrorBody
-    
+
     class ApiResponseBody < Dry::Struct
       transform_keys(&:to_sym)
 

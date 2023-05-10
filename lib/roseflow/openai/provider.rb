@@ -42,9 +42,9 @@ module Roseflow
         streaming = options.fetch(:streaming, false)
 
         if streaming
-          client.streaming_chat_completion(model: model, messages: messages, **options)
+          client.streaming_chat_completion(model: model, messages: messages.map(&:to_h), **options)
         else
-          client.create_chat_completion(model: model, messages: messages, **options)
+          client.create_chat_completion(model: model, messages: messages.map(&:to_h), **options)
         end
       end
 
@@ -98,6 +98,10 @@ module Roseflow
       # @option options [String] :user A unique identifier representing your end-user
       def embedding(model:, input:, **options)
         client.create_embedding(model: model, input: input, **options).embedding.to_embedding
+      end
+
+      def image(prompt:, **options)
+        client.create_image(prompt: prompt, **options)
       end
 
       attr_reader :config

@@ -33,12 +33,12 @@ module Roseflow
       #
       # @param operation [Symbol] Operation to perform
       # @param input [String] Input to use
-      def call(operation, input)
+      def call(operation, input, **options)
         token_count = tokenizer.count_tokens(transform_chat_messages(input))
         if token_count < max_tokens
           case operation
           when :chat
-            @provider_.create_chat_completion(model: name, messages: transform_chat_messages(input))
+            @provider_.create_chat_completion(model: name, messages: transform_chat_messages(input), **options)
           when :completion
             @provider_.create_completion(input)
           when :image
@@ -52,27 +52,27 @@ module Roseflow
           raise TokenLimitExceededError, "Token limit for model #{name} exceeded: #{token_count} is more than #{max_tokens}"
         end
       end
-      
+
       # Indicates if the model is chattable.
       def chattable?
-        OpenAI::CHAT_MODELS.include?(name)
+        OpenAI::Config::CHAT_MODELS.include?(name)
       end
 
       # Indicates if the model can do completions.
       def completionable?
-        OpenAI::COMPLETION_MODELS.include?(name)
+        OpenAI::Config::COMPLETION_MODELS.include?(name)
       end
 
       # Indicates if the model can do image completions.
       def imageable?
-        OpenAI::IMAGE_MODELS.include?(name)
+        OpenAI::Config::IMAGE_MODELS.include?(name)
       end
 
       # Indicates if the model can do embeddings.
       def embeddable?
-        OpenAI::EMBEDDING_MODELS.include?(name)
+        OpenAI::Config::EMBEDDING_MODELS.include?(name)
       end
-      
+
       # Indicates if the model is fine-tunable.
       def finetuneable?
         @permissions_.fetch("allow_fine_tuning")
@@ -94,7 +94,7 @@ module Roseflow
 
       # Returns the maximum number of tokens for the model.
       def max_tokens
-        OpenAI::MAX_TOKENS.fetch(name, 2049)
+        OpenAI::Config::MAX_TOKENS.fetch(name, 2049)
       end
 
       private
