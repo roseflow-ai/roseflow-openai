@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "dry-struct"
-require "roseflow/tokenizer"
+require "roseflow/tiktoken/tokenizer"
 require "active_support/core_ext/module/delegation"
 
 module Types
@@ -25,32 +25,39 @@ module Roseflow
 
       # Tokenizer instance for the model.
       def tokenizer
-        @tokenizer_ ||= Tokenizer.new(model: name)
+        @tokenizer_ ||= Roseflow::Tiktoken::Tokenizer.new(model: name)
       end
 
-      # Handles the model call.
-      # FIXME: Operations should be rewritten to match the client API.
+      # Convenience method for chat completions.
+      #
+      # @param messages [Array<String>] Messages to use
+      # @param options [Hash] Options to use
+      # @yield [chunk] Chunk of data if stream is enabled
+      # @return [OpenAI::ChatResponse] the chat response object if no block is given
+      def chat(messages, options = {}, &block)
+        token_count = tokenizer.count_tokens(transform_chat_messages(options.fetch(:messages, [])))
+        raise TokenLimitExceededError, "Token limit for model #{name} exceeded: #{token_count} is more than #{max_tokens}" if token_count > max_tokens
+        response = call(:chat, options.merge({ messages: messages, model: name }), &block)
+        ChatResponse.new(response) unless block_given?
+      end
+
+      # Calls the model.
       #
       # @param operation [Symbol] Operation to perform
-      # @param input [String] Input to use
-      def call(operation, input, **options)
-        token_count = tokenizer.count_tokens(transform_chat_messages(input))
-        if token_count < max_tokens
-          case operation
-          when :chat
-            @provider_.create_chat_completion(model: name, messages: transform_chat_messages(input), **options)
-          when :completion
-            @provider_.create_completion(input)
-          when :image
-            @provider_.create_image_completion(input)
-          when :embed
-            @provider_.create_embedding(input)
-          else
-            raise ArgumentError, "Invalid operation: #{operation}"
-          end
-        else
-          raise TokenLimitExceededError, "Token limit for model #{name} exceeded: #{token_count} is more than #{max_tokens}"
-        end
+      # @param options [Hash] Options to use
+      # @yield [chunk] Chunk of data if stream is enabled
+      # @return [Faraday::Response] raw API response if no block is given
+      def call(operation, options, &block)
+        operation = OperationHandler.new(operation, options).call
+        client.post(operation, &block)
+      end
+
+      # Returns a list of operations for the model.
+      #
+      # TODO: OpenAI does not actually provide this information per model.
+      # Figure out a way to do this in a proper way if feasible.
+      def operations
+        OperationHandler::OPERATION_CLASSES.keys
       end
 
       # Indicates if the model is chattable.
@@ -99,6 +106,8 @@ module Roseflow
 
       private
 
+      attr_reader :provider_
+
       def assign_attributes
         @name = @model_.fetch("id")
         @created_at = Time.at(@model_.fetch("created"))
@@ -107,6 +116,10 @@ module Roseflow
 
       def transform_chat_messages(input)
         input.map(&:to_h)
+      end
+
+      def client
+        provider_.client
       end
     end # Model
 

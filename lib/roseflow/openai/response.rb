@@ -4,11 +4,6 @@ require "dry-struct"
 require "roseflow/types"
 require "roseflow/openai/embedding"
 
-module Types
-  include Dry.Types()
-  Number = Types::Integer | Types::Float
-end
-
 module Roseflow
   module OpenAI
     FailedToCreateEmbeddingError = Class.new(StandardError)
@@ -142,7 +137,7 @@ module Roseflow
       transform_keys(&:to_sym)
 
       attribute :object, Types::String.default("embedding")
-      attribute :embedding, Types::Array(Types::Number)
+      attribute :embedding, Types::Array(::Types::Number)
       attribute :index, Types::Integer
     end # OpenAIEmbedding
 

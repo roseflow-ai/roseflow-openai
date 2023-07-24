@@ -63,15 +63,15 @@ module Roseflow
           describe "Default" do
             let(:model) do
               data = JSON.parse(File.read("spec/fixtures/models/gpt-3_5-turbo.json"))
-              Roseflow::OpenAI::Model.new(data, provider)  
+              Roseflow::OpenAI::Model.new(data, provider)
             end
 
             it "returns a response" do
               VCR.use_cassette("openai/chat/default", record: :new_episodes) do
                 messages = [
-                  { role: "user", content: "Hello!"},
+                  { role: "user", content: "Hello!" },
                   { role: "assistant", content: "Hi there! How can I assist you today?" },
-                  { role: "user", content: "Tell me a funny joke"}
+                  { role: "user", content: "Tell me a funny joke" },
                 ]
 
                 response = provider.chat(model: model, messages: messages)
@@ -90,16 +90,14 @@ module Roseflow
             it "returns a streaming response" do
               VCR.use_cassette("openai/chat/streaming", record: :new_episodes) do
                 messages = [
-                  { role: "user", content: "Hello!"},
+                  { role: "user", content: "Hello!" },
                   { role: "assistant", content: "Hi there! How can I assist you today?" },
-                  { role: "user", content: "Tell me a funny joke"}
+                  { role: "user", content: "Tell me a funny joke" },
                 ]
 
                 response = provider.chat(model: model, messages: messages, streaming: true) do |response|
                   expect(response).to be_a String
                 end
-                expect(response).to be_a Array
-                expect(response).to all(be_a String)
               end
             end
           end

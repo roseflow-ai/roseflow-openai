@@ -2,6 +2,7 @@
 
 require "faraday"
 require "faraday/retry"
+require "roseflow/types"
 require "roseflow/openai/config"
 require "roseflow/openai/model"
 require "roseflow/openai/response"
@@ -32,6 +33,23 @@ module Roseflow
         end
       end
 
+      # Posts an operation to the API.
+      #
+      # @param operation [OpenAI::Operation] the operation to post
+      # @yield [String] the streamed API response
+      # @return [OpenAI::Response] the API response object if no block is given
+      def post(operation, &block)
+        response = connection.post(operation.path) do |request|
+          request.body = operation.body
+          if operation.stream
+            request.options.on_data = Proc.new do |chunk|
+              yield chunk if block_given?
+            end
+          end
+        end
+        response unless block_given?
+      end
+
       # Creates a chat completion.
       #
       # @param model [Roseflow::OpenAI::Model] the model to use
@@ -42,7 +60,7 @@ module Roseflow
         response = connection.post("/v1/chat/completions") do |request|
           request.body = options.merge({
             model: model.name,
-            messages: messages
+            messages: messages,
           })
         end
         ChatResponse.new(response)
@@ -58,10 +76,11 @@ module Roseflow
       def streaming_chat_completion(model:, messages:, **options, &block)
         streamed = []
         connection.post("/v1/chat/completions") do |request|
+          options.delete(:streaming)
           request.body = options.merge({
             model: model.name,
             messages: messages,
-            stream: true
+            stream: true,
           })
           request.options.on_data = Proc.new do |chunk|
             yield streaming_chunk(chunk) if block_given?
@@ -81,7 +100,7 @@ module Roseflow
         response = connection.post("/v1/completions") do |request|
           request.body = options.merge({
             model: model.name,
-            prompt: prompt
+            prompt: prompt,
           })
         end
         CompletionResponse.new(response)
@@ -100,7 +119,7 @@ module Roseflow
           request.body = options.merge({
             model: model.name,
             prompt: prompt,
-            stream: true
+            stream: true,
           })
           request.options.on_data = Proc.new do |chunk|
             yield streaming_chunk(chunk) if block_given?
@@ -120,7 +139,7 @@ module Roseflow
         response = connection.post("/v1/edits") do |request|
           request.body = options.merge({
             model: model.name,
-            instruction: instruction
+            instruction: instruction,
           })
         end
         EditResponse.new(response)
@@ -144,7 +163,7 @@ module Roseflow
           connection.post("/v1/embeddings") do |request|
             request.body = {
               model: model.name,
-              input: input
+              input: input,
             }
           end
         )
@@ -160,8 +179,8 @@ module Roseflow
           url: Config::OPENAI_API_URL,
           headers: {
             # "Content-Type" => "application/json",
-            "OpenAI-Organization" => config.organization_id
-          }
+            "OpenAI-Organization" => config.organization_id,
+          },
         ) do |faraday|
           faraday.request :authorization, "Bearer", -> { config.api_key }
           faraday.request :json

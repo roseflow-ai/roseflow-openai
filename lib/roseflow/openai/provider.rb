@@ -38,11 +38,11 @@ module Roseflow
       # @option options [Integer] :streaming Whether to stream back partial progress
       # @option options [String] :user A unique identifier representing your end-user
       # @return [Roseflow::OpenAI::ChatResponse] The response object from the API.
-      def chat(model:, messages:, **options)
+      def chat(model:, messages:, **options, &block)
         streaming = options.fetch(:streaming, false)
 
         if streaming
-          client.streaming_chat_completion(model: model, messages: messages.map(&:to_h), **options)
+          client.streaming_chat_completion(model: model, messages: messages.map(&:to_h), **options, &block)
         else
           client.create_chat_completion(model: model, messages: messages.map(&:to_h), **options)
         end
