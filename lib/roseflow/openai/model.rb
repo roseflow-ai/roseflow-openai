@@ -4,6 +4,8 @@ require "dry-struct"
 require "roseflow/tiktoken/tokenizer"
 require "active_support/core_ext/module/delegation"
 
+require "roseflow/openai/operation_handler"
+
 module Types
   include Dry.Types()
 end
@@ -50,6 +52,11 @@ module Roseflow
       def call(operation, options, &block)
         operation = OperationHandler.new(operation, options).call
         client.post(operation, &block)
+      end
+
+      def embed(options)
+        response = call(:embedding, options.merge({ model: name }))
+        EmbeddingApiResponse.new(response)
       end
 
       # Returns a list of operations for the model.
@@ -119,7 +126,7 @@ module Roseflow
       end
 
       def client
-        provider_.client
+        provider_
       end
     end # Model
 

@@ -40,6 +40,12 @@ module Roseflow
       def response
         choices.first
       end
+
+      def to_s
+        if choices.any?
+          choices.first.to_s
+        end
+      end
     end
 
     class CompletionResponse < TextApiResponse

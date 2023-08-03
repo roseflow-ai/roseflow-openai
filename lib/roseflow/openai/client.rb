@@ -7,16 +7,16 @@ require "roseflow/openai/config"
 require "roseflow/openai/model"
 require "roseflow/openai/response"
 
-FARADAY_RETRY_OPTIONS = {
-  max: 3,
-  interval: 0.05,
-  interval_randomness: 0.5,
-  backoff_factor: 2,
-}
-
 module Roseflow
   module OpenAI
     class Client
+      FARADAY_RETRY_OPTIONS = {
+        max: 3,
+        interval: 0.05,
+        interval_randomness: 0.5,
+        backoff_factor: 2,
+      }
+
       def initialize(config = Config.new, provider = nil)
         @config = config
         @provider = provider
@@ -41,7 +41,7 @@ module Roseflow
       def post(operation, &block)
         response = connection.post(operation.path) do |request|
           request.body = operation.body
-          if operation.stream
+          if operation.respond_to?(:stream) && operation.stream
             request.options.on_data = Proc.new do |chunk|
               yield chunk if block_given?
             end
