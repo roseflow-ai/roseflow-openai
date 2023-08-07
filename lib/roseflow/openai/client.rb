@@ -2,6 +2,7 @@
 
 require "faraday"
 require "faraday/retry"
+require "faraday/typhoeus"
 require "roseflow/types"
 require "roseflow/openai/config"
 require "roseflow/openai/model"
@@ -43,6 +44,7 @@ module Roseflow
           request.body = operation.body
           if operation.respond_to?(:stream) && operation.stream
             request.options.on_data = Proc.new do |chunk|
+              # publish_data_event(chunk) if operation.stream_events
               yield chunk if block_given?
             end
           end
@@ -185,7 +187,8 @@ module Roseflow
           faraday.request :authorization, "Bearer", -> { config.api_key }
           faraday.request :json
           faraday.request :retry, FARADAY_RETRY_OPTIONS
-          faraday.adapter Faraday.default_adapter
+          # faraday.adapter Faraday.default_adapter
+          faraday.adapter :typhoeus
         end
       end
 
@@ -199,6 +202,13 @@ module Roseflow
           JSON.parse(json).dig("choices", 0, "delta", "content")
         end.join("")
       end
+
+      # def publish_data_event(chunk)
+      #   Roseflow::Registry.get(:events).publish(
+      #     :stream_event,
+      #     body: chunk
+      #   )
+      # end
     end # Client
   end # OpenAI
 end # Roseflow
