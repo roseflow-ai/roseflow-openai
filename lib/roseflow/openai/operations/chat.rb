@@ -2,7 +2,9 @@
 
 require_relative "base"
 
+require "roseflow/types"
 require "roseflow/openai/chat_message"
+require "ulid"
 
 module Roseflow
   module OpenAI
@@ -31,7 +33,14 @@ module Roseflow
         attribute :frequency_penalty, Types::Number.default(0)
         attribute? :user, Types::String
 
+        attribute :instrumentation, Types::Bool.default(false)
+        attribute :stream_events, Types::Bool.default(false)
+        attribute :stream_id, Types::StringOrNil.default(ULID.generate)
         attribute :path, Types::String.default("/v1/chat/completions")
+
+        def excluded_keys
+          [:path, :instrumentation, :stream_events, :stream_id]
+        end
       end
     end
   end

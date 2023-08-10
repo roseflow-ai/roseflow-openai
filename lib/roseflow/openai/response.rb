@@ -31,6 +31,10 @@ module Roseflow
         @body ||= ApiResponseBody.new(JSON.parse(@response.body))
       end
 
+      def usage
+        body.usage
+      end
+
       def choices
         body.choices.map { |choice| Choice.new(choice) }
       end

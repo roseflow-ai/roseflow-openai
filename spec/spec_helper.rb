@@ -18,3 +18,5 @@ RSpec.configure do |config|
 end
 
 Anyway::Settings.use_local_files = true
+
+require_relative "./support/test_doubles"

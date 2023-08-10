@@ -8,8 +8,12 @@ module Roseflow
 
         attribute :model, Types::String
 
+        def excluded_keys
+          [:path]
+        end
+
         def body
-          to_h.except(:path)
+          to_h.except(*excluded_keys)
         end
       end
     end

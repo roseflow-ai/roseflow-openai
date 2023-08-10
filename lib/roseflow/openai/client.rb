@@ -8,6 +8,8 @@ require "roseflow/openai/config"
 require "roseflow/openai/model"
 require "roseflow/openai/response"
 
+require "roseflow/events/model/streaming_event"
+
 module Roseflow
   module OpenAI
     class Client
@@ -44,7 +46,7 @@ module Roseflow
           request.body = operation.body
           if operation.respond_to?(:stream) && operation.stream
             request.options.on_data = Proc.new do |chunk|
-              # publish_data_event(chunk) if operation.stream_events
+              publish_data_event(chunk, operation.stream_id) if operation.stream_events
               yield chunk if block_given?
             end
           end
@@ -187,7 +189,6 @@ module Roseflow
           faraday.request :authorization, "Bearer", -> { config.api_key }
           faraday.request :json
           faraday.request :retry, FARADAY_RETRY_OPTIONS
-          # faraday.adapter Faraday.default_adapter
           faraday.adapter :typhoeus
         end
       end
@@ -203,12 +204,16 @@ module Roseflow
         end.join("")
       end
 
-      # def publish_data_event(chunk)
-      #   Roseflow::Registry.get(:events).publish(
-      #     :stream_event,
-      #     body: chunk
-      #   )
-      # end
+      def publish_data_event(chunk, stream_id)
+        chunk.scan(/{.*}/).map do |event|
+          Roseflow::Registry.get(:events).publish(
+            Roseflow::Events::Model::StreamingEvent.new(
+              body: event,
+              stream_id: stream_id
+            )
+          )
+        end
+      end
     end # Client
   end # OpenAI
 end # Roseflow
