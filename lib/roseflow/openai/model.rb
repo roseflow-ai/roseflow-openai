@@ -156,9 +156,9 @@ module Roseflow
 
       attribute :id, Types::String
       attribute :created, Types::Integer
-      attribute :permission, Types::Array.of(ModelPermission)
-      attribute :root, Types::String
-      attribute :parent, Types::String | Types::Nil
+      attribute? :permission, Types::Array.of(ModelPermission)
+      attribute? :root, Types::String
+      attribute? :parent, Types::String | Types::Nil
 
       alias_method :name, :id
 
