@@ -118,7 +118,7 @@ module Roseflow
       def assign_attributes
         @name = @model_.fetch("id")
         @created_at = Time.at(@model_.fetch("created"))
-        @permissions_ = @model_.fetch("permission").first
+        # @permissions_ = @model_.fetch("permission").first
       end
 
       def transform_chat_messages(input)
