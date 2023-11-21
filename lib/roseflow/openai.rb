@@ -7,6 +7,7 @@ require_relative "openai/client"
 require_relative "openai/config"
 require_relative "openai/operation_handler"
 require_relative "openai/provider"
+require_relative "openai/file"
 
 module Roseflow
   module OpenAI

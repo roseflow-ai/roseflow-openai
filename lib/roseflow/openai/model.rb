@@ -2,6 +2,7 @@
 
 require "dry-struct"
 require "roseflow/tiktoken/tokenizer"
+require "active_support"
 require "active_support/core_ext/module/delegation"
 
 require "roseflow/openai/operation_handler"

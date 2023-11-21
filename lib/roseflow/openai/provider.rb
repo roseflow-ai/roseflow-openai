@@ -6,7 +6,7 @@ require "roseflow/openai/model_repository"
 module Roseflow
   module OpenAI
     class Provider
-      delegate :post, to: :client
+      delegate :post, :get_file_content, to: :client
 
       def initialize(config = Roseflow::OpenAI::Config.new)
         @config = config

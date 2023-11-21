@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "active_support"
 require "active_support/core_ext/module/delegation"
 
 module Roseflow
@@ -8,7 +9,7 @@ module Roseflow
       attr_reader :models
 
       delegate :each, :all, to: :models
-      
+
       def initialize(provider)
         @provider = provider
         @models = provider.client.models
@@ -18,7 +19,7 @@ module Roseflow
       #
       # @param name [String] Name of the model
       def find(name)
-        @models.select{ |model| model.name == name }.first
+        @models.select { |model| model.name == name }.first
       end
 
       # Returns all models that are chattable.

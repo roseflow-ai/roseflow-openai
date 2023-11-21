@@ -8,5 +8,13 @@ module Roseflow
     class ChatMessage < Roseflow::Chat::Message
       attribute? :function_call, Types::OpenAI::FunctionCallObject
     end
+
+    class VisionChatMessage < ChatMessage
+      attribute :content, Types::OpenAI::VisionChatMessageContent
+    end
+
+    class VisionImageMessage < ChatMessage
+      attribute :content, Types::OpenAI::VisionImageMessageContent
+    end
   end
 end

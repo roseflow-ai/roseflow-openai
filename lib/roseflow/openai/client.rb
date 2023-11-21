@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 require "faraday"
+require "faraday/multipart"
 require "faraday/retry"
 require "faraday/typhoeus"
 require "roseflow/types"
 require "roseflow/openai/config"
 require "roseflow/openai/model"
 require "roseflow/openai/response"
+require "roseflow/openai/operations/upload"
 
 require "roseflow/events/model/streaming_event"
 
@@ -36,6 +38,22 @@ module Roseflow
         end
       end
 
+      def files
+        json = JSON.parse(connection.get("/v1/files").body)
+        json.fetch("data", []).map do |file|
+          OpenAI::File.new(file, self)
+        end
+      end
+
+      def get_file(file_id)
+        json = JSON.parse(connection.get("/v1/files/#{file_id}").body)
+        OpenAI::File.new(json)
+      end
+
+      def get_file_content(file_id)
+        connection.get("/v1/files/#{file_id}/content").body
+      end
+
       # Posts an operation to the API.
       #
       # @param operation [OpenAI::Operation] the operation to post
@@ -52,6 +70,21 @@ module Roseflow
           end
         end
         response unless block_given?
+      end
+
+      def upload(io, filename)
+        operation = Operations::Upload.new(filename: filename)
+        response = multipart_connection.post(operation.path) do |request|
+          request.body = {
+            purpose: operation.purpose,
+            file: Faraday::UploadIO.new(io, "", operation.filename),
+          }
+        end
+        if response.success?
+          OpenAI::File.new(JSON.parse(response.body))
+        else
+          JSON.parse(response.body)
+        end
       end
 
       # Creates a chat completion.
@@ -193,6 +226,22 @@ module Roseflow
         end
       end
 
+      def multipart_connection
+        @multipart_connection ||= Faraday.new(
+          url: Config::OPENAI_API_URL,
+          headers: {
+            "Content-Type" => "multipart/form-data",
+            "OpenAI-Organization" => config.organization_id,
+          },
+        ) do |faraday|
+          faraday.request :authorization, "Bearer", -> { config.api_key }
+          faraday.request :multipart
+          # faraday.request :url_encoded
+          # faraday.request :retry, FARADAY_RETRY_OPTIONS
+          # faraday.adapter :typhoeus
+        end
+      end
+
       # Parses streaming chunks from the API response.
       #
       # @param chunk [String] the chunk to parse
@@ -209,7 +258,7 @@ module Roseflow
           Roseflow::Registry.get(:events).publish(
             Roseflow::Events::Model::StreamingEvent.new(
               body: event,
-              stream_id: stream_id
+              stream_id: stream_id,
             )
           )
         end
