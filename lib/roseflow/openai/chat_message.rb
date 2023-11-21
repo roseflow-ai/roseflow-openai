@@ -10,7 +10,7 @@ module Roseflow
     end
 
     class VisionChatMessage < ChatMessage
-      attribute :content, Types::OpenAI::VisionChatMessageContent
+      attribute :content, Types::Array.of(Types::OpenAI::VisionChatMessageContent | Types::OpenAI::VisionImageMessageContent)
     end
 
     class VisionImageMessage < ChatMessage
