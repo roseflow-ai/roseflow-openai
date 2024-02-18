@@ -4,7 +4,7 @@ require "spec_helper"
 
 def gpt_3_5(provider)
   Roseflow::OpenAI::Model.new(
-    JSON.parse(File.read("spec/fixtures/models/gpt-3_5-turbo.json")),
+    JSON.parse(::File.read("spec/fixtures/models/gpt-3_5-turbo.json")),
     provider
   )
 end

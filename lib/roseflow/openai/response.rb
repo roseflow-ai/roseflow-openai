@@ -26,6 +26,12 @@ module Roseflow
       end
     end # ApiResponse
 
+    class ErrorResponse < ApiResponse
+      def body
+        JSON.parse(@response.body)
+      end
+    end
+
     class TextApiResponse < ApiResponse
       def body
         @body ||= ApiResponseBody.new(JSON.parse(@response.body))

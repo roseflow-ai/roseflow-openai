@@ -1,0 +1,10 @@
+{
+  "object": "file",
+  "id": "file-e2dmblcGWxMh9oOV665hjWDg",
+  "purpose": "fine-tune",
+  "filename": "file",
+  "bytes": 18181,
+  "created_at": 1693137086,
+  "status": "processed",
+  "status_details": null
+}

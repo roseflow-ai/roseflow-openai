@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "event_stream_parser"
 require "faraday"
 require "faraday/multipart"
 require "faraday/retry"
@@ -166,22 +167,6 @@ module Roseflow
         streamed unless block_given?
       end
 
-      # Given a prompt and an instruction, the model will return an edited version of the prompt.
-      #
-      # @param model [String] the model to use
-      # @param instruction [String] the instruction to use
-      # @param options [Hash] the options to use
-      # @return [OpenAI::TextApiResponse] the API response object
-      def create_edit(model:, instruction:, **options)
-        response = connection.post("/v1/edits") do |request|
-          request.body = options.merge({
-            model: model.name,
-            instruction: instruction,
-          })
-        end
-        EditResponse.new(response)
-      end
-
       def create_image(prompt:, **options)
         ImageApiResponse.new(
           connection.post("/v1/images/generations") do |request|
@@ -246,11 +231,22 @@ module Roseflow
       #
       # @param chunk [String] the chunk to parse
       # @return [String] the parsed chunk
+
+      # def streaming_chunk(chunk)
+      #   return chunk unless chunk.match(/{.*}/)
+      #   chunk.scan(/{.*}/).map do |json|
+      #     JSON.parse(json).dig("choices", 0, "delta", "content")
+      #   end.join("")
+      # end
+
       def streaming_chunk(chunk)
-        return chunk unless chunk.match(/{.*}/)
-        chunk.scan(/{.*}/).map do |json|
-          JSON.parse(json).dig("choices", 0, "delta", "content")
-        end.join("")
+        parser = EventStreamParser::Parser.new
+        content = ""
+        parser.feed(chunk) do |_type, data|
+          parsed = JSON.parse(data).dig("choices", 0, "delta", "content") unless data == "[DONE]"
+          content += parsed unless parsed.nil?
+        end
+        content
       end
 
       def publish_data_event(chunk, stream_id)

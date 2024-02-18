@@ -25,6 +25,7 @@ module Roseflow
 
         before do
           event_bus.register(:stream_event)
+          event_bus.register(:model_streaming_event)
         end
 
         it "streams SSE chunks as events" do

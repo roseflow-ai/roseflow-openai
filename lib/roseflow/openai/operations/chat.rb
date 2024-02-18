@@ -35,11 +35,15 @@ module Roseflow
 
         attribute :instrumentation, Types::Bool.default(false)
         attribute :stream_events, Types::Bool.default(false)
-        attribute :stream_id, Types::StringOrNil
+        attribute? :stream_id, Types::StringOrNil
         attribute :path, Types::String.default("/v1/chat/completions")
 
         def excluded_keys
           [:path, :instrumentation, :stream_events, :stream_id]
+        end
+
+        def stream_id
+          @stream_id ||= ULID.generate
         end
       end
     end

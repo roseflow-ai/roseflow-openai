@@ -52,7 +52,7 @@ module Roseflow
 
       describe "#create_completion" do
         let(:model) do
-          data = JSON.parse(File.read("./spec/fixtures/models/text-davinci-003.json"))
+          data = JSON.parse(File.read("./spec/fixtures/models/gpt-3_5-turbo-instruct.json"))
           Roseflow::OpenAI::Model.new(data, provider)
         end
 
@@ -61,24 +61,6 @@ module Roseflow
             prompt = "Roseflow is a Ruby gem for using OpenAI's API. How do I integrate it into my application?"
 
             response = provider.completion(model: model, prompt: prompt)
-            expect(response).to be_a Roseflow::OpenAI::TextApiResponse
-            expect(response).to be_success
-          end
-        end
-      end
-
-      describe "#create_edit" do
-        let(:model) do
-          data = JSON.parse(File.read("./spec/fixtures/models/text-davinci-edit-001.json"))
-          Roseflow::OpenAI::Model.new(data, provider)
-        end
-
-        it "returns a response" do
-          VCR.use_cassette("openai", record: :new_episodes) do
-            instruction = "Fix the spelling mistakes"
-            input = "Roseflow is a Ruuby gemm for useing OpenAI's API."
-
-            response = provider.edit(model: model, instruction: instruction, input: input)
             expect(response).to be_a Roseflow::OpenAI::TextApiResponse
             expect(response).to be_success
           end

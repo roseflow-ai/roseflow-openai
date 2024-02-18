@@ -6,6 +6,10 @@ require "active_support"
 require "active_support/core_ext/module/delegation"
 
 require "roseflow/openai/operation_handler"
+require "roseflow/openai/model_configuration"
+require "roseflow/openai/model_permission"
+require "roseflow/openai/chat_message"
+require "roseflow/openai/chat_message_builder"
 
 module Types
   include Dry.Types()
@@ -14,6 +18,8 @@ end
 module Roseflow
   module OpenAI
     class Model
+      MAX_TOKENS_DEFAULT = 2049
+
       attr_reader :name
 
       # Initializes a new model instance.
@@ -33,15 +39,21 @@ module Roseflow
 
       # Convenience method for chat completions.
       #
-      # @param messages [Array<String>] Messages to use
+      # @param messages [Array<ChatMessage>] Messages to use
       # @param options [Hash] Options to use
       # @yield [chunk] Chunk of data if stream is enabled
       # @return [OpenAI::ChatResponse] the chat response object if no block is given
       def chat(messages, options = {}, &block)
+        messages = ensure_chat_messages(messages)
         token_count = tokenizer.count_tokens(transform_chat_messages(options.fetch(:messages, [])))
         raise TokenLimitExceededError, "Token limit for model #{name} exceeded: #{token_count} is more than #{max_tokens}" if token_count > max_tokens
-        response = call(:chat, options.merge({ messages: messages, model: name }), &block)
-        ChatResponse.new(response) unless block_given?
+        operation_opts = options.merge({ messages: messages, model: name })
+        response = call(:chat, operation_opts, &block)
+
+        unless block_given?
+          return ErrorResponse.new(response) if response.status == 400
+          return ChatResponse.new(response)
+        end
       end
 
       # Calls the model.
@@ -109,7 +121,7 @@ module Roseflow
 
       # Returns the maximum number of tokens for the model.
       def max_tokens
-        OpenAI::Config::MAX_TOKENS.fetch(name, 2049)
+        OpenAI::Config::MAX_TOKENS.fetch(name, MAX_TOKENS_DEFAULT)
       end
 
       private
@@ -129,45 +141,13 @@ module Roseflow
       def client
         provider_
       end
+
+      def ensure_chat_messages(messages)
+        return messages if messages.all? { |message| message.is_a?(Roseflow::OpenAI::ChatMessage) }
+        ChatMessageBuilder.new(messages).call
+      end
     end # Model
 
-    # Represents a model permission.
-    class ModelPermission < Dry::Struct
-      transform_keys(&:to_sym)
-
-      attribute :id, Types::String
-      attribute :object, Types::String
-      attribute :created, Types::Integer
-      attribute :allow_create_engine, Types::Bool
-      attribute :allow_sampling, Types::Bool
-      attribute :allow_logprobs, Types::Bool
-      attribute :allow_search_indices, Types::Bool
-      attribute :allow_view, Types::Bool
-      attribute :allow_fine_tuning, Types::Bool
-      attribute :organization, Types::String
-      attribute :is_blocking, Types::Bool
-
-      alias_method :finetuneable?, :allow_fine_tuning
-      alias_method :is_blocking?, :is_blocking
-    end # ModelPermission
-
     # Represents a model configuration.
-    class ModelConfiguration < Dry::Struct
-      transform_keys(&:to_sym)
-
-      attribute :id, Types::String
-      attribute :created, Types::Integer
-      attribute? :permission, Types::Array.of(ModelPermission)
-      attribute? :root, Types::String
-      attribute? :parent, Types::String | Types::Nil
-
-      alias_method :name, :id
-
-      def permissions
-        permission.first
-      end
-
-      delegate :finetuneable?, :is_blocking?, to: :permissions
-    end # ModelConfiguration
   end # OpenAI
 end # Roseflow

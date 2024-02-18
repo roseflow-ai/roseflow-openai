@@ -1,0 +1,6 @@
+{
+  "id": "gpt-3.5-turbo-instruct",
+  "object": "model",
+  "created": 1692901427,
+  "owned_by": "system"
+}

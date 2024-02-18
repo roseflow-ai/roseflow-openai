@@ -15,28 +15,35 @@ end
 
 def gpt_3_5(provider)
   Roseflow::OpenAI::Model.new(
-    JSON.parse(File.read("spec/fixtures/models/gpt-3_5-turbo.json")),
+    JSON.parse(::File.read("spec/fixtures/models/gpt-3_5-turbo.json")),
+    provider
+  )
+end
+
+def gpt_3_5_instruct(provider)
+  Roseflow::OpenAI::Model.new(
+    JSON.parse(::File.read("spec/fixtures/models/gpt-3_5-turbo-instruct.json")),
     provider
   )
 end
 
 def davinci_003(provider)
   Roseflow::OpenAI::Model.new(
-    JSON.parse(File.read("spec/fixtures/models/text-davinci-003.json")),
+    JSON.parse(::File.read("spec/fixtures/models/text-davinci-003.json")),
     provider
   )
 end
 
 def davinci_edit_001(provider)
   Roseflow::OpenAI::Model.new(
-    JSON.parse(File.read("spec/fixtures/models/text-davinci-edit-001.json")),
+    JSON.parse(::File.read("spec/fixtures/models/text-davinci-edit-001.json")),
     provider
   )
 end
 
 def embedding_ada(provider)
   Roseflow::OpenAI::Model.new(
-    JSON.parse(File.read("spec/fixtures/models/text-embedding-ada-002.json")),
+    JSON.parse(::File.read("spec/fixtures/models/text-embedding-ada-002.json")),
     provider
   )
 end
@@ -62,7 +69,7 @@ module Roseflow
         describe "Chat completion" do
           describe "Default" do
             let(:model) do
-              data = JSON.parse(File.read("spec/fixtures/models/gpt-3_5-turbo.json"))
+              data = JSON.parse(::File.read("spec/fixtures/models/gpt-3_5-turbo.json"))
               Roseflow::OpenAI::Model.new(data, provider)
             end
 
@@ -83,7 +90,7 @@ module Roseflow
 
           describe "Streaming" do
             let(:model) do
-              data = JSON.parse(File.read("spec/fixtures/models/gpt-3_5-turbo.json"))
+              data = JSON.parse(::File.read("spec/fixtures/models/gpt-3_5-turbo.json"))
               Roseflow::OpenAI::Model.new(data, provider)
             end
 
@@ -105,7 +112,7 @@ module Roseflow
 
         describe "Completion" do
           describe "Default" do
-            let(:model) { davinci_003(provider) }
+            let(:model) { gpt_3_5_instruct(provider) }
 
             it "returns a response" do
               VCR.use_cassette("openai/completion/default", record: :new_episodes) do
@@ -117,7 +124,7 @@ module Roseflow
           end
 
           describe "Streaming" do
-            let(:model) { davinci_003(provider) }
+            let(:model) { gpt_3_5_instruct(provider) }
 
             it "streams the response" do
               VCR.use_cassette("openai/completion/streaming", record: :new_episodes) do
@@ -127,18 +134,6 @@ module Roseflow
                 expect(response).to be_a Array
                 expect(response).to all(be_a String)
               end
-            end
-          end
-        end
-
-        describe "Edit" do
-          let(:model) { davinci_edit_001(provider) }
-
-          it "returns a response" do
-            VCR.use_cassette("openai/edit", record: :new_episodes) do
-              response = provider.edit(model: model, instruction: "Rewrite this sentence in a more formal tone", input: "I went to the park to play with my dog.")
-              expect(response).to be_a OpenAI::EditResponse
-              expect(response.response.to_s).to be_a String
             end
           end
         end

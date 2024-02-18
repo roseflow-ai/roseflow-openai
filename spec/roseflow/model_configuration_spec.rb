@@ -7,7 +7,7 @@ require "roseflow/openai/model"
 module Roseflow
   module OpenAI
     RSpec.describe ModelConfiguration do
-      let(:configuration) { JSON.parse(File.read("spec/fixtures/models/gpt-3_5-turbo.json")) }
+      let(:configuration) { JSON.parse(::File.read("spec/fixtures/models/gpt-3_5-turbo.json")) }
 
       subject { ModelConfiguration.new(configuration) }
 
