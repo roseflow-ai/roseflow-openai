@@ -4,6 +4,10 @@ require "roseflow/chat/message"
 
 module Roseflow
   module OpenAI
+    MessagesArrayError = Class.new(StandardError)
+    MessagesArrayInsufficientMessageCountError = Class.new(StandardError)
+    MessagesInputNotHashesError = Class.new(StandardError)
+
     class ChatMessageBuilder
       def initialize(messages)
         @messages = messages
