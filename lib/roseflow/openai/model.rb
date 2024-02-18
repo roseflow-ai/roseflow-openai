@@ -143,7 +143,7 @@ module Roseflow
       end
 
       def ensure_chat_messages(messages)
-        return messages if messages.all? { |message| message.is_a?(Roseflow::OpenAI::ChatMessage) }
+        return messages if messages.all? { |message| message.is_a?(Roseflow::Chat::Message) }
         ChatMessageBuilder.new(messages).call
       end
     end # Model
