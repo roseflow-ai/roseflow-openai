@@ -21,6 +21,7 @@ module Roseflow
         interval: 0.05,
         interval_randomness: 0.5,
         backoff_factor: 2,
+        retry_statuses: [429]
       }
 
       def initialize(config = Config.new, provider = nil)
