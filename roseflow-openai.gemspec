@@ -36,7 +36,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "faraday"
   spec.add_dependency "faraday-multipart"
   spec.add_dependency "faraday-retry"
-  spec.add_dependency "faraday-typhoeus"
   spec.add_dependency "roseflow-tiktoken"
 
   spec.add_development_dependency "awesome_print"

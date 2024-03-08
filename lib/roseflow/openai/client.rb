@@ -4,7 +4,6 @@ require "event_stream_parser"
 require "faraday"
 require "faraday/multipart"
 require "faraday/retry"
-require "faraday/typhoeus"
 require "roseflow/types"
 require "roseflow/openai/config"
 require "roseflow/openai/model"
@@ -208,7 +207,7 @@ module Roseflow
           faraday.request :authorization, "Bearer", -> { config.api_key }
           faraday.request :json
           faraday.request :retry, FARADAY_RETRY_OPTIONS
-          faraday.adapter :typhoeus
+          faraday.adapter Faraday.default_adapter
         end
       end
 
@@ -224,7 +223,6 @@ module Roseflow
           faraday.request :multipart
           # faraday.request :url_encoded
           # faraday.request :retry, FARADAY_RETRY_OPTIONS
-          # faraday.adapter :typhoeus
         end
       end
 
